@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: AuthService API
+  description: API d'authentification pour ChainChat.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8081
+    description: Serveur local pour AuthService
+
+paths:
+  /auth/register:
+    post:
+      summary: Inscription d'un nouvel utilisateur
+      tags:
+        - Auth
+      requestBody:
+        description: Informations nécessaires pour l'inscription
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Utilisateur créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Paramètres invalides ou utilisateur déjà existant
+
+  /auth/login:
+    post:
+      summary: Authentification d'un utilisateur
+      tags:
+        - Auth
+      requestBody:
+        description: Identifiants de connexion (username et password)
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Connexion réussie, renvoie le token JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Identifiants incorrects
+
+  /auth/validate-token:
+    post:
+      summary: Valide un token JWT
+      tags:
+        - Auth
+      requestBody:
+        description: Token JWT à valider
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '200':
+          description: Token valide
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenValidationResponse'
+        '401':
+          description: Token non valide ou expiré
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "Jean"
+        lastName:
+          type: string
+          example: "Paul"
+        username:
+          type: string
+          example: "user1"
+        password:
+          type: string
+          format: password
+          example: "mySecurePassword"
+        confirmPassword:
+          type: string
+          format: password
+          example: "mySecurePassword"
+        email:
+          type: string
+          format: email
+          example: "user1@example.com"
+        number:
+          type: string 
+          format: number 
+          example: "+33612567389"
+      required:
+        - firstName
+        - lastName
+        - username
+        - password
+        - confirmPassword
+        - email
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "user1"
+        password:
+          type: string
+          format: password
+          example: "mySecurePassword"
+      required:
+        - username
+        - password
+
+    TokenRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTYzMjM1NTg2MiwiZXhwIjoxNjMyMzU5NDYyfQ"
+      required:
+        - token
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: "user1"
+        email:
+          type: string
+          example: "user1@example.com"
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMSIsImlhdCI6MTYzMjM1NTg2MiwiZXhwIjoxNjMyMzU5NDYyfQ"
+
+    TokenValidationResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          example: true
+        username:
+          type: string
+          example: "user1"
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Opérations d'authentification
