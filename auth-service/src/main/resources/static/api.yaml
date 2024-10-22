@@ -4,7 +4,7 @@ info:
   description: API d'authentification pour ChainChat.
   version: 1.0.0
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:8080
     description: Serveur local pour AuthService
 
 paths:
@@ -82,6 +82,27 @@ components:
       bearerFormat: JWT
 
   schemas:
+    User:
+      x-class-extra-annotation: "@lombok.Getter @lombok.Setter @jakarta.persistence.Entity @jakarta.persistence.Table(name = \"user\")"
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          x-field-extra-annotation: "@jakarta.persistence.Id @jakarta.persistence.GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)"
+        firstName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+        number:
+          type: string
+
     RegisterRequest:
       type: object
       properties:
@@ -98,10 +119,6 @@ components:
           type: string
           format: password
           example: "mySecurePassword"
-        confirmPassword:
-          type: string
-          format: password
-          example: "mySecurePassword"
         email:
           type: string
           format: email
@@ -115,8 +132,8 @@ components:
         - lastName
         - username
         - password
-        - confirmPassword
         - email
+        - number
 
     LoginRequest:
       type: object
