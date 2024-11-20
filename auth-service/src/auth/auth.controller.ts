@@ -1,25 +1,24 @@
 import {
     Body,
     Controller,
-    Get,
     HttpCode,
     HttpStatus,
     Post,
     Req,
-    Res,
-    UseGuards
+    Res
   } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { Response, Request } from 'express';
-import { stat } from 'fs';
+import { JwtService } from '@nestjs/jwt';
   
   @ApiTags('auth')
   @Controller('auth')
   export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService,
+                private readonly jwtService: JwtService) {}
 
     @ApiOperation({ summary: 'Register user' })
     @ApiResponse({ status: 201, description: 'User successfully registered' })
@@ -63,4 +62,21 @@ import { stat } from 'fs';
         });
       }
     }
+    
+    @ApiOperation({ summary: 'Validate token' })
+    @ApiResponse({ status: 200, description: 'Token is valid' })
+    @ApiResponse({ status: 401, description: 'Token is invalid' })
+    @HttpCode(HttpStatus.OK)
+    @Post('/validate-token')
+    async validateToken(@Body('token') token: string): Promise<any> {
+      try {
+        const decoded = await this.jwtService.verify(token, {
+          secret: process.env.JWT_SECRET,
+        });
+        return { valid: true, decoded };
+      } catch (error) {
+        return { valid: false, error: error.message };
+      }
+    }
+
   }
