@@ -14,18 +14,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid()) @map("_id")
-  email     String   @unique
-  username  String   @unique
-  messages   Message[]
+  id        String    @id @default(cuid()) @map("_id")
+  email     String    @unique
+  username  String    @unique
+  messages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
-
-
 model Message {
-  id        String   @id @default(cuid()) @map("_id")
-  sender    User     @relation(fields: [senderId], references: [id])
-  senderId  String
-  content   String
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid()) @map("_id")
+  sender         User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId       String
+  recipient      User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  recipientId    String
+  content        String
+  conversationId String?  @unique
+  createdAt      DateTime @default(now())
+  readAt         DateTime? 
+  isDeleted      Boolean  @default(false) 
 }
