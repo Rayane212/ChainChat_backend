@@ -39,7 +39,6 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
       client.data.user = user; 
       client.join(`user-${user.id}`); 
-      console.log(`Client connected: ${client.id}, User: ${user.id}`);
     } catch (error) {
       console.error('JWT validation error:', error.message);
       client.disconnect(); 
@@ -65,7 +64,6 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
       const message = await this.messagingService.createMessage(data);
       const user = await this.userService.addMessageToUser(data.senderId, message.id);  
-      console.log(user);    
 
       client.emit('messageSent', message); 
       this.server.to(`user-1`).emit('messageReceived', message);
