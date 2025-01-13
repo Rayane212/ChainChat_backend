@@ -57,6 +57,14 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
     @ConnectedSocket() client: Socket,
   ) {
     try {
+
+      // format data :
+      // {
+      //   "senderId": "2",
+      //   "recipientId": "1",
+      //   "content": "Hello"
+      // }
+
       const { recipientId, content } = JSON.parse(data);
 
       const message = await this.messagingService.createMessage({
