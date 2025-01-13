@@ -8,8 +8,6 @@ export class MessagingService {
 
 
   async createMessage(messageData: MessagingDto) {
-    console.log(messageData);
-
     const message = await this.prisma.message.create({
       data: {
         sender: {

@@ -4,6 +4,8 @@ import { MessagingService } from './messaging.service';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { MessagingDto } from './dto/messaging.dto';
+import { instanceToPlain, plainToClass, plainToInstance } from 'class-transformer';
+import { ValidationPipe } from '@nestjs/common';
 
 @WebSocketGateway({ cors: { origin: '*' }})
 export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -51,26 +53,44 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
-    @MessageBody() messageData: MessagingDto,
+    @MessageBody() data: string,
     @ConnectedSocket() client: Socket,
   ) {
     try {
-  
-      const data = new MessagingDto();
-      data.senderId = client.data.user.id;
-      data.recipientId = messageData.recipientId || '1';
-      data.content = messageData.content || 'Hello, World!';  
 
+      // format data :
+      // {
+      //   "senderId": "2",
+      //   "recipientId": "1",
+      //   "content": "Hello"
+      // }
 
-      const message = await this.messagingService.createMessage(data);
-      const user = await this.userService.addMessageToUser(data.senderId, message.id);  
+      const { recipientId, content } = JSON.parse(data);
+
+      const message = await this.messagingService.createMessage({
+        senderId: client.data.user.id,
+        recipientId: recipientId,
+        content: content,
+      }as MessagingDto);
+
+      await this.userService.addMessageToUser(client.data.user.id, message.id);
 
       client.emit('messageSent', message); 
-      this.server.to(`user-1`).emit('messageReceived', message);
+      this.server.to(`user-${recipientId}`).emit('messageReceived', message); 
+
     } catch (error) {
-      console.log('Error handling sendMessage:', error);
-      console.error('Error handling sendMessage:', error.message);
-      client.emit('error', { type: 'send_message_error', message: error.message });
+      console.error('Error in handleSendMessage:', error.message);
+
+      client.emit('error', {
+        type: 'send_message_error',
+        message: error.message || 'An unexpected error occurred',
+      });
     }
+  }
+
+
+  @SubscribeMessage('events')
+   handleEvent(@MessageBody() data: any): MessagingDto {
+    return data;
   }
 }

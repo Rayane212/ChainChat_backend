@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
 import { MessagingService } from './messaging.service';
 import { JwtUserGuard } from 'src/auth/auth.guard';
 
@@ -13,7 +13,8 @@ export class MessagingController {
   }
 
   @Get()
-  async getMessagesForUser(@Query('userId') userId: string) {
-    return this.messagingService.getMessagesForUser(userId);
+  async getMessagesForUser(@Request() req) {
+    const authenticatedUserId = req.user.id;
+    return this.messagingService.getMessagesForUser(authenticatedUserId);
   }
 }
