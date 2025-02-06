@@ -1,18 +1,16 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayConnection, OnGatewayDisconnect, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { MessagingService } from './messaging.service';
-import { UserService } from 'src/user/user.service';
+import { Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { JwtService } from '@nestjs/jwt';
-import { MessagingDto } from './dto/messaging.dto';
-import { instanceToPlain, plainToClass, plainToInstance } from 'class-transformer';
-import { ValidationPipe } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
 
 @WebSocketGateway({ cors: { origin: '*' }})
 export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer() server:Server;
+  @WebSocketServer() server: Server;
+  
   constructor(
-    private readonly messagingService: MessagingService,
-    private readonly userService: UserService,
+    @Inject('MESSAGING_SERVICE') private readonly messagingClient: ClientProxy,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -32,18 +30,11 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
         return client.disconnect();
       }
 
-      const user = await this.userService.findOne(payload.id.toString());
-
-      if (!user) {
-        console.error('User not found');
-        return client.disconnect();
-      }
-
-      client.data.user = user; 
-      client.join(`user-${user.id}`); 
+      client.data.user = payload;
+      client.join(`user-${payload.id}`);
     } catch (error) {
       console.error('JWT validation error:', error.message);
-      client.disconnect(); 
+      client.disconnect();
     }
   }
 
@@ -53,44 +44,35 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
-    @MessageBody() data: string,
+    @MessageBody() data: any,
     @ConnectedSocket() client: Socket,
   ) {
     try {
-
-      // format data :
-      // {
-      //   "senderId": "2",
-      //   "recipientId": "1",
-      //   "content": "Hello"
-      // }
-
-      const { recipientId, content } = JSON.parse(data);
-
-      const message = await this.messagingService.createMessage({
+      const messageData = {
         senderId: client.data.user.id,
-        recipientId: recipientId,
-        content: content,
-      }as MessagingDto);
+        recipientId: data.recipientId,
+        content: data.content
+      };
 
-      await this.userService.addMessageToUser(client.data.user.id, message.id);
+      const response = await firstValueFrom(
+        this.messagingClient.send('messages.create', messageData)
+      );
 
-      client.emit('messageSent', message); 
-      this.server.to(`user-${recipientId}`).emit('messageReceived', message); 
-
+      if (response.status === 'success') {
+        client.emit('messageSent', response.data);
+        this.server.to(`user-${data.recipientId}`).emit('messageReceived', response.data);
+      } else {
+        client.emit('error', {
+          type: 'send_message_error',
+          message: response.message
+        });
+      }
     } catch (error) {
       console.error('Error in handleSendMessage:', error.message);
-
       client.emit('error', {
         type: 'send_message_error',
-        message: error.message || 'An unexpected error occurred',
+        message: error.message || 'An unexpected error occurred'
       });
     }
-  }
-
-
-  @SubscribeMessage('events')
-   handleEvent(@MessageBody() data: any): MessagingDto {
-    return data;
   }
 }

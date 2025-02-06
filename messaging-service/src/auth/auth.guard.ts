@@ -1,35 +1,27 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { UserService } from 'src/user/user.service';
-
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
+import { UserService } from "src/user/user.service";
 
 @Injectable()
-export class JwtUserGuard implements CanActivate {
+export class MessagingAuthGuard implements CanActivate {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly userService: UserService,
+    private readonly userService: UserService 
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    const userInfo = request.user; 
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return false;
+    if (!userInfo) {
+      throw new UnauthorizedException('User information missing');
     }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = this.jwtService.decode(token);
-
-    // Remplir ou récupérer l'utilisateur dans MongoDB via Prisma
-    const user = await this.userService.findOrCreateUser({
-      id: decoded.id, 
-      username: decoded.username,
-      email: decoded.email,
+    // Initialiser ou récupérer l'utilisateur dans MongoDB
+    const mongoUser = await this.userService.findOrCreateUser({
+      id: userInfo.id,
+      email: userInfo.email
     });
 
-    request.user = user;
-
+    request.mongoUser = mongoUser;
     return true;
   }
 }

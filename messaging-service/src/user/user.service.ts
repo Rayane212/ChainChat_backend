@@ -5,16 +5,16 @@ import { PrismaService } from 'src/prisma.service';
 export class UserService {
     constructor(private readonly prismaService: PrismaService) {}
 
-    async findOrCreateUser(userData: any) {
-        const { id, username, email } = userData;
+    async findOrCreateUser(data: any) {
+        const { id, username, email } = data.user;
+
         const userId = id.toString();
-    
         // const msgIds : string[] = obj.map((msg) => msg.id);
         let user = await this.prismaService.user.findUnique({
           where: 
-            { email: email }
+            { email: data.user.email }
         });
-    
+
         if (!user) {
           user = await this.prismaService.user.create({
             data: { 
@@ -38,6 +38,12 @@ export class UserService {
       async findOne(id: string) {
         return this.prismaService.user.findUnique({
           where: { id },
+        });
+      }
+
+      async create(userData: any) {
+        return this.prismaService.user.create({
+          data: userData,
         });
       }
 
