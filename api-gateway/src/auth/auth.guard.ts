@@ -38,7 +38,6 @@ export class AuthGuard implements CanActivate {
 
 
     if (user) {
-      console.log('User:', user);
       // Synchroniser l'utilisateur avec le service de messagerie
       const result = await firstValueFrom(
         this.messagingClient.send('sync_user', { user })
