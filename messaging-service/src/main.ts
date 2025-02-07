@@ -1,12 +1,30 @@
+// main.ts
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { MessagingModule } from 'src/messaging/messaging.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Créer une application hybride
+  const app = await NestFactory.create(MessagingModule);
 
-  app.useGlobalPipes(new ValidationPipe({transform: true}))
+  // Configurer le microservice TCP
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host: 'localhost',
+      port: parseInt(process.env.PORT) || 3002,
+    },
+  });
+
+  // Activer CORS
+  app.enableCors({
+    origin: '*',
+    credentials: true
+  });
+
+  // Démarrer les microservices
+  await app.startAllMicroservices();
   
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(3003); 
 }
 bootstrap();

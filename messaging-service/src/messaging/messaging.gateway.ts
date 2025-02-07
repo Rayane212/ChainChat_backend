@@ -4,10 +4,13 @@ import { MessagingService } from './messaging.service';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { MessagingDto } from './dto/messaging.dto';
-import { instanceToPlain, plainToClass, plainToInstance } from 'class-transformer';
-import { ValidationPipe } from '@nestjs/common';
 
-@WebSocketGateway({ cors: { origin: '*' }})
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+    credentials: true
+  },
+})
 export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server:Server;
   constructor(
@@ -19,6 +22,7 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   async handleConnection(client: Socket) {
     try {
       const authHeader = client.handshake.headers.authorization;
+      console.log("authHeader", client.handshake.headers);
 
       if (!authHeader) {
         console.error('Authorization header is missing');
@@ -86,11 +90,5 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
         message: error.message || 'An unexpected error occurred',
       });
     }
-  }
-
-
-  @SubscribeMessage('events')
-   handleEvent(@MessageBody() data: any): MessagingDto {
-    return data;
   }
 }

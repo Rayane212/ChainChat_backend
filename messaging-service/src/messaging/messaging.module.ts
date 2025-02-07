@@ -7,7 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 
 @Module({
-    providers: [MessagingGateway, MessagingService, PrismaService, JwtService, UserService],
-    controllers: [MessagingController]
+    providers: [MessagingService, PrismaService, JwtService, UserService, MessagingGateway],
+    controllers: [MessagingController],
 })
-export class ChatModule {}
+export class MessagingModule {}

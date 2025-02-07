@@ -2,13 +2,12 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from 'src/user/user.module';
-import { PrismaService } from 'src/prisma.service';
 import { JwtStrategy } from './jwt.strategy';
-import { UserService } from 'src/user/user.service';
 import { PassportModule } from '@nestjs/passport';
+import { PrismaService } from 'src/prisma.service';
 
 @Module({
-  providers: [PrismaService, JwtStrategy, UserService],
+  providers: [JwtStrategy, PrismaService],
   imports: [
     UserModule, 
     PassportModule,
