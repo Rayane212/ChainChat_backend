@@ -31,7 +31,6 @@ export class ApiGatewayController {
     }
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post('auth/login')
   async login(@Body() loginDto: any) {
     try {
@@ -106,6 +105,16 @@ export class ApiGatewayController {
         HttpStatus.SERVICE_UNAVAILABLE
       );
     }
+  }
+
+  @Get('ws-info')
+  @UseGuards(AuthGuard)
+  getWebSocketInfo(@Request() req) {
+    return {
+      wsUrl: process.env.MESSAGING_WS_URL || 'http://localhost:3003',
+      userId: req.user.id,
+      token: req.headers.authorization
+    };
   }
 
   

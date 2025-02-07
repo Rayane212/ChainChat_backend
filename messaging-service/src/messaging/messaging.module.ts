@@ -3,11 +3,11 @@ import { MessagingGateway } from './messaging.gateway';
 import { MessagingService } from './messaging.service';
 import { PrismaService } from 'src/prisma.service';
 import { MessagingController } from './messaging.controller';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 
 @Module({
-    providers: [MessagingService, PrismaService, JwtService, UserService],
+    providers: [MessagingService, PrismaService, JwtService, UserService, MessagingGateway],
     controllers: [MessagingController],
 })
 export class MessagingModule {}
