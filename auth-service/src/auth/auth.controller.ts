@@ -52,6 +52,25 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
       }
     }
 
+    @MessagePattern('auth.forget-password')
+    async forgetPassword(@Payload() data: {email: string}) {
+      try {
+        const result = await this.authService.forgetPassword(data.email);
+        return {
+          status: 'success',
+          message: 'Email sent successfully',
+          result: result
+        };
+      } catch (err) {
+        return {
+          status: 'error',
+          message: 'Internal server error',
+          error: err.message
+        };
+      }
+    }
+
+
     @MessagePattern('auth.validate-token')  
     async validateToken(@Payload() data: {token : string}): Promise<any> {
       try {

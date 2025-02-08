@@ -54,4 +54,9 @@ export class AuthService {
         }
 
     }
+
+    forgetPassword(email:string): Promise<any> {
+        // Appeler le service de mail pour envoyer un mail de récupération de mot de passe
+        throw new Error('Method not implemented.');   
+    }
 }
