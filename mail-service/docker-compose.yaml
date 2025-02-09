@@ -11,12 +11,9 @@ services:
     container_name: mail_service
     depends_on:
       - redis
-    environment:
-      - NODE_ENV=production
-      - RESEND_API_KEY=ta_cle_api_resend
-      - EMAIL_FROM=no-reply@tondomaine.com
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+    env_file:
+      - .env
+
     ports:
       - "50052:50052"
     restart: always
