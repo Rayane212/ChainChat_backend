@@ -6,8 +6,18 @@ import { MailService } from './mail.service';
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 
-  @GrpcMethod('MailService', 'SendMail')
+  @GrpcMethod('MailService', 'SendMail') 
   async sendMail(data: { to: string; subject: string; html: string }) {
-    return this.mailService.sendMail(data.to, data.subject, data.html);
+    try {
+      await this.mailService.sendMail({
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+      });
+
+      return { success: true, message: 'Email sent successfully' };
+    } catch (error) {
+      return { success: false, message: 'Failed to send email' };
+    }
   }
 }

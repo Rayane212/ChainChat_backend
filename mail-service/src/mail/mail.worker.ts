@@ -11,6 +11,7 @@ export function createMailWorker(configService: ConfigService) {
       const { to, subject, html } = job.data;
 
       try {
+        console.log(`📧 Envoi email à ${to}...`);
         await resend.emails.send({
           from: configService.get<string>('EMAIL_FROM'),
           to,
@@ -18,16 +19,15 @@ export function createMailWorker(configService: ConfigService) {
           html,
         });
 
-        console.log(`📧 Email envoyé à ${to}`);
       } catch (error) {
-        console.error('Erreur envoi email:', error);
-        throw new Error('Échec de l’envoi d’email');
+        console.error('Error sending email:', error);
+        throw new Error('Failed to send email');
       }
     },
     {
       connection: {
-        host: configService.get<string>('REDIS_HOST'),
-        port: configService.get<number>('REDIS_PORT'),
+        host: configService.get<string>('REDIS_HOST', 'localhost'),
+        port: configService.get<number>('REDIS_PORT', 6379),
       },
     }
   );
