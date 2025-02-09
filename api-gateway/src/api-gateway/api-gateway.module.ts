@@ -11,7 +11,7 @@ import { AuthModule } from 'src/auth/auth.module';
             name: 'AUTH_SERVICE',
             transport: Transport.TCP,
             options: {
-              host: 'localhost',
+              host: 'auth_service',
               port: 3001,
             },
           },
@@ -19,7 +19,7 @@ import { AuthModule } from 'src/auth/auth.module';
             name: 'MESSAGING_SERVICE',
             transport: Transport.TCP,
             options: {
-              host: 'localhost',
+              host: 'messaging_service',
               port: 3002, 
             },
           },
