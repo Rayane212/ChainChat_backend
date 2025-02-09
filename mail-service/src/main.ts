@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
-import { MicroserviceOptions, Server, Transport } from '@nestjs/microservices';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import { createMailWorker } from './mail/mail.worker';

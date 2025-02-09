@@ -11,7 +11,6 @@ export function createMailWorker(configService: ConfigService) {
       const { to, subject, html } = job.data;
 
       try {
-        console.log(`📧 Envoi email à ${to}...`);
         await resend.emails.send({
           from: configService.get<string>('EMAIL_FROM'),
           to,
