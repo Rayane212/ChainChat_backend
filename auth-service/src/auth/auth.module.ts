@@ -8,6 +8,8 @@ import { PrismaService } from 'src/prisma.service';
 import { JwtStrategy } from './jwt.strategy';
 import { UserService } from 'src/user/user.service';
 import { PassportModule } from '@nestjs/passport';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { join } from 'path';
 
 @Module({
   controllers: [AuthController],
@@ -19,6 +21,17 @@ import { PassportModule } from '@nestjs/passport';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN },
     }),
+    ClientsModule.register([
+      {
+        name: 'MAIL_SERVICE',
+        transport: Transport.GRPC,
+        options: {
+          package: 'mail',
+          protoPath: join(__dirname, '../../../proto/mail.proto'),
+          url: '0.0.0.0:50052'
+        },
+      },
+    ]),
   ],
 })
 export class AuthModule {}
