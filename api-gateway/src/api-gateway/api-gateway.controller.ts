@@ -47,6 +47,24 @@ export class ApiGatewayController {
     }
   }
 
+  // forget password  
+  @Post('auth/forget-password')
+  async forgetPassword(@Body() data: any) {
+    try {
+      const response = await firstValueFrom(
+        this.authClient.send('auth.forget-password', data)
+      );
+      return response;
+    } catch (error) {
+      console.error('Forget password error:', error);
+      throw new HttpException(
+        error.message || 'Service temporarily unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+  }
+
+
   @Post('auth/validate-token')
   async validateToken(@Body('token') token: string) {
     try {
@@ -116,6 +134,8 @@ export class ApiGatewayController {
       token: req.headers.authorization
     };
   }
+
+
 
   
 }
