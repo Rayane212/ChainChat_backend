@@ -12,7 +12,7 @@ async function bootstrap() {
       options: {
         package: 'mail',
         protoPath: join(__dirname, '../proto/mail.proto'),
-        url: '0.0.0.0:50052',
+        url: 'mail_service:50052',
       },
     });
 
