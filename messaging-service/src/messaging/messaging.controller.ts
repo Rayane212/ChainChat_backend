@@ -33,6 +33,7 @@ export class MessagingController {
   async getMessagesForUser(@Payload() data: any ) {
     try {
       const { userId } = data;
+      console.log('userId', userId);
       const messages = await this.messagingService.getMessagesForUser(userId);
       return {
         status: 'success',

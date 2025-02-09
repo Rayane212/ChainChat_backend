@@ -15,11 +15,12 @@ export class MessagingAuthGuard implements CanActivate {
       throw new UnauthorizedException('User information missing');
     }
 
-    // Initialiser ou récupérer l'utilisateur dans MongoDB
     const mongoUser = await this.userService.findOrCreateUser({
       id: userInfo.id,
       email: userInfo.email
     });
+
+    console.log('mongoUser', mongoUser);
 
     request.mongoUser = mongoUser;
     return true;
