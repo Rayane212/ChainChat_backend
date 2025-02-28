@@ -158,7 +158,6 @@ export class AuthService implements OnModuleInit {
 
 
       async generateTwoFASecret(authHeader: string) {
-        console.log('authHeader:', authHeader);
         const token = authHeader?.split(' ')[1];
         if (!token) {
           throw new RpcException('Invalid token');
