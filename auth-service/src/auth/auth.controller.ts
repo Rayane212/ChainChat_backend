@@ -1,93 +1,69 @@
-import {
-    Body,
-    Controller,
-    HttpCode,
-    HttpStatus,
-    Post
-  } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
+import { MessagePattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { JwtService } from '@nestjs/jwt';
-import { MessagePattern, Payload } from '@nestjs/microservices';
 
-  @Controller('auth')
-  export class AuthController {
-    constructor(private readonly authService: AuthService,
-                private readonly jwtService: JwtService) {}
+@Controller()
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
 
-    @MessagePattern('auth.register')  
-    async register(@Payload() data: RegisterDto) {
-      try {
-        const result = await this.authService.register(data);
-        return {
-          status: 'success',
-          message: 'User successfully registered',
-          result: result
-        };
-      } catch (err) {
-        return {
-          status: 'error',
-          message: 'Internal server error',
-          error: err.message
-        };
-      }
+  @MessagePattern('auth.register')
+  async register(@Payload() data: any, @Ctx() context: RmqContext) {
+    const channel = context.getChannelRef();
+    const msg = context.getMessage();
+
+    try {
+      const result = await this.authService.register(data);
+      const response = { status: 'success', result };
+
+      channel.ack(msg);
+      return response;
+    } catch (error) {
+      channel.ack(msg);
+      return { status: 'error', message: error.message };
     }
-  
-    @MessagePattern('auth.login')  // Pattern modifié
-    async login(@Payload() data: LoginDto) {
-      try {
-        const result = await this.authService.login(data);
-        return {
-          status: 'success',
-          message: 'User successfully logged in',
-          result: result
-        };
-      } catch (err) {
-        return {
-          status: 'error',
-          message: 'Internal server error',
-          error: err.message
-        };
-      }
-    }
-
-    @MessagePattern('auth.validate-token')  
-    async validateToken(@Payload() data: {token : string}): Promise<any> {
-      try {
-        const decoded = await this.jwtService.verify(data.token, {
-          secret: process.env.JWT_SECRET,
-        });
-        return { 
-          status: 'success',
-          valid: true,
-          decoded 
-        };
-      } catch (error) {
-        return { 
-          status: 'error',
-          valid: false, 
-          error: error.message 
-        };
-      }
-    }
-
-    @MessagePattern('auth.forget-password')
-    async forgetPassword(@Payload() data: {email: string}) {
-      try {
-        const result = await this.authService.sendPasswordResetEmail(data.email);
-        return {
-          status: result.success ? 'success' : 'error',
-          message: result.message,
-        };
-      } catch (err) {
-        return {
-          status: 'error',
-          message: 'Internal server error',
-          error: err.message
-        };
-      }
-    }
-
-
   }
+
+  @MessagePattern('auth.login')
+  async login(@Payload() data: any, @Ctx() context: RmqContext) {
+    console.log(`Pattern: ${context.getPattern()}`);
+    const channel = context.getChannelRef();
+    const msg = context.getMessage();
+    console.log(context);
+
+    try {
+      const result = await this.authService.login(data);
+      const response = { status: 'success', result };
+
+      channel.ack(msg);
+      return response;
+    } catch (error) {
+      channel.ack(msg);
+      return { status: 'error', message: error.message };
+    }
+  }
+
+  @MessagePattern('auth.validate-token')
+  async validateToken(@Payload() data: { token: string }, @Ctx() context: RmqContext) {
+    const channel = context.getChannelRef();
+    const msg = context.getMessage();
+
+    try {
+      const decoded = await this.authService.validateToken(data.token);
+      const response = { valid: true, decoded };
+
+      channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(response)), {
+        correlationId: msg.properties.correlationId,
+      });
+
+      channel.ack(msg);
+    } catch (error) {
+      const response = { valid: false, error: error.message };
+
+      channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(response)), {
+        correlationId: msg.properties.correlationId,
+      });
+
+      channel.ack(msg);
+    }
+  }
+}

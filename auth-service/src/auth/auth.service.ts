@@ -69,6 +69,10 @@ export class AuthService implements OnModuleInit {
 
     }
 
+    async validateToken(token: string): Promise<any> {
+        return this.jwtService.verify(token);
+      }
+
 
     async sendPasswordResetEmail(email: string) {
         const resetLink = `https://chainchat.com/reset-password?token=${this.jwtService.sign({email})}`;

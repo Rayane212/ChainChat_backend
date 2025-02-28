@@ -3,18 +3,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ApiGatewayController } from './api-gateway.controller';
 import { JwtService } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
+import { RabbitMQService } from 'src/rabbitmq/rabbitmq.service';
 
 @Module({
     imports: [
         ClientsModule.register([
-          {
-            name: 'AUTH_SERVICE',
-            transport: Transport.TCP,
-            options: {
-              host: 'auth_service',
-              port: 3001,
-            },
-          },
           {
             name: 'MESSAGING_SERVICE',
             transport: Transport.TCP,
@@ -27,7 +20,7 @@ import { AuthModule } from 'src/auth/auth.module';
         AuthModule
       ],
       controllers: [ApiGatewayController],
-      providers: [JwtService],
+      providers: [JwtService, RabbitMQService],
     })
 
 export class ApiGatewayModule {}

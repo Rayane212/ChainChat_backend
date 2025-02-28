@@ -10,10 +10,11 @@ import { UserService } from 'src/user/user.service';
 import { PassportModule } from '@nestjs/passport';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { join } from 'path';
+import { RabbitMQService } from 'src/rabbitmq/rabbitmq.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, PrismaService, JwtStrategy, UserService],
+  providers: [AuthService, PrismaService, JwtStrategy, UserService, RabbitMQService],
   imports: [
     UserModule, 
     PassportModule,
