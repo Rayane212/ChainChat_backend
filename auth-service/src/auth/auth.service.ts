@@ -154,71 +154,90 @@ export class AuthService implements OnModuleInit {
         } catch (err) {
           throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-      }
+    }
 
 
-      async generateTwoFASecret(authHeader: string) {
+    async generateTwoFASecret(authHeader: string) {
         const token = authHeader?.split(' ')[1];
         if (!token) {
-          throw new RpcException('Invalid token');
+            throw new RpcException('Invalid token');
         }
-    
+
         let decoded;
         try {
-          decoded = this.jwtService.verify(token);
+            decoded = this.jwtService.verify(token);
         } catch (err) {
-          throw new RpcException('Invalid or expired token');
+            throw new RpcException('Invalid or expired token');
         }
-    
+
         const userId = decoded.id;
-    
+
         const user = await this.userService.findUserById(userId);
         if (!user) {
-          throw new RpcException('User not found');
+            throw new RpcException('User not found');
         }
-    
-        const secret = speakeasy.generateSecret({
-          name: `ChainChat (${user.email})`,
-        });
-    
-        await this.userService.enableTwoFA(userId, secret.base32);
-    
-        const qrCode = await QRCode.toDataURL(secret.otpauth_url);
-    
-        return {
-          secret: secret.base32,
-          qrCode,
-        };
-      }
 
-      async verifyTwoFA(tokenJwt: string, code: string) {
+        const secret = speakeasy.generateSecret({
+            name: `ChainChat (${user.email})`,
+        });
+
+        await this.userService.enableTwoFA(userId, secret.base32);
+
+        const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+
+        return {
+            secret: secret.base32,
+            qrCode,
+        };
+    }
+
+    async verifyTwoFA(tokenJwt: string, code: string) {
         let decoded;
         try {
-          decoded = this.jwtService.verify(tokenJwt);
+            decoded = this.jwtService.verify(tokenJwt);
         } catch (err) {
-          throw new RpcException('Invalid or expired token');
+            throw new RpcException('Invalid or expired token');
         }
-    
+
         const userId = decoded.id;
         const user = await this.userService.findUserById(userId);
         if (!user || !user.isTwoFAEnabled || !user.twoFASecret) {
-          throw new UnauthorizedException('2FA is not enabled for this user');
+            throw new UnauthorizedException('2FA is not enabled for this user');
         }
-    
+
         const isValid = speakeasy.totp.verify({
-          secret: user.twoFASecret,
-          encoding: 'base32',
-          token: code,
-          window: 1, 
+            secret: user.twoFASecret,
+            encoding: 'base32',
+            token: code,
+            window: 1, 
         });
-    
+
         if (!isValid) {
-          throw new UnauthorizedException('Invalid 2FA code');
+            throw new UnauthorizedException('Invalid 2FA code');
         }
         const token = this.jwtService.sign({ id: user.id, email: user.email });
 
         return { success: true, message: '2FA verification successful' , token };
-      }
+    }
       
+    async disableTwoFA(tokenJwt: string) {
+        let decoded;
+        try {
+            decoded = this.jwtService.verify(tokenJwt);
+        } catch (err) {
+            throw new RpcException('Invalid or expired token');
+        }
+
+        const userId = decoded.id;
+        const user = await this.userService.findUserById(userId);
+        if (!user || !user.isTwoFAEnabled) {
+            throw new UnauthorizedException('2FA is not enabled for this user');
+        }
+        
+
+        await this.userService.disableTwoFA(userId);
+
+        return { success: true, message: '2FA disabled successfully' };
+    }
 
 }

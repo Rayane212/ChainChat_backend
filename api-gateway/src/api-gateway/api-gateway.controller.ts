@@ -117,6 +117,24 @@ export class ApiGatewayController {
     }
   }
 
+  @UseGuards(AuthGuard)
+  @Post('auth/disable-2fa')
+  async disableTwoFA(@Headers('Authorization') authHeader: string) {
+    try{
+      authHeader = authHeader.split(' ')[1];
+      const response = await firstValueFrom(
+        this.authClient.send('auth.disable-2fa', { token: authHeader })
+      );
+      return response;
+    }catch (error) {
+      console.error('Generate 2FA secret error:', error);
+      throw new HttpException(
+        error.message || 'Service temporarily unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+  }
+
   @Post('auth/validate-token')
   async validateToken(@Body('token') token: string) {
     try {
