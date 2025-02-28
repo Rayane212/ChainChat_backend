@@ -22,7 +22,6 @@ export class MessagingGateway implements OnGatewayConnection, OnGatewayDisconnec
   async handleConnection(client: Socket) {
     try {
       const authHeader = client.handshake.headers.authorization;
-      console.log("authHeader", client.handshake.headers);
 
       if (!authHeader) {
         console.error('Authorization header is missing');

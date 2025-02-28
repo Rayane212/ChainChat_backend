@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
 import { PrismaService } from 'src/prisma.service';
 import { LoginDto } from './dto/login.dto';

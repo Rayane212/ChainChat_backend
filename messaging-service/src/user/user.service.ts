@@ -8,6 +8,12 @@ export class UserService {
     async findOrCreateUser(data: any) {
         const { id, username, email } = data.user;
 
+        console.log('data', data);
+
+        let users = await this.prismaService.user.findMany();
+
+        console.log('users', users);
+
         const userId = id.toString();
         // const msgIds : string[] = obj.map((msg) => msg.id);
         let user = await this.prismaService.user.findUnique({

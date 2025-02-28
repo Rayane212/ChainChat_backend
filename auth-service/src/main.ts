@@ -8,7 +8,7 @@ async function bootstrap() {
     {
       transport: Transport.TCP,
       options: {
-        host: 'localhost',
+        host: 'auth_service',
         port:  parseInt(process.env.PORT) || 3001
       },
     },

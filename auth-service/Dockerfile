@@ -16,6 +16,6 @@ RUN pnpx prisma generate
 
 RUN pnpm run build
 
-EXPOSE 3002 
+EXPOSE 3001
 
 CMD ["pnpm", "start"]

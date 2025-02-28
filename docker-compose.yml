@@ -1,0 +1,139 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb_chainchat
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: chainchat
+      MYSQL_DATABASE: chainchat
+      MYSQL_USER: chainchat
+      MYSQL_PASSWORD: chainchat
+    networks:
+      - chainchat-network
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_chainchat
+    restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: chainchat_message
+    networks:
+      - chainchat-network
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  mongodb-setup:
+    image: mongo:latest
+    restart: "no"
+    depends_on:
+      - mongodb
+    networks:
+      - chainchat-network
+    command: >
+      mongosh --host mongodb_chainchat:27017 --eval '
+        config = {
+          "_id": "rs0",
+          "members": [
+            { "_id": 0, "host": "mongodb_chainchat:27017" }
+          ]
+        };
+        rs.initiate(config);
+      '
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api_gateway
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./api-gateway/.env
+    networks:
+      - chainchat-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    
+    
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth_service
+    env_file:
+      - ./auth-service/.env
+    expose:
+      - "3001"
+    networks:
+      - chainchat-network
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      
+    
+  mail-service:
+    build: ./mail-service
+    container_name: mail_service
+    env_file:
+      - ./mail-service/.env
+    expose:
+      - "50052"
+    networks:
+      - chainchat-network
+    depends_on:
+      - redis
+
+  messaging-service:
+    build: ./messaging-service
+    container_name: messaging_service
+    env_file:
+      - ./messaging-service/.env
+    ports:
+      - "3003:3003"  
+    expose:
+      - "3002"       
+    networks:
+      - chainchat-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+
+  redis:
+    image: redis:latest
+    container_name: redis_mail_service
+    ports:
+      - "6379:6379"
+    networks:
+      - chainchat-network
+    volumes:
+      - redis_data:/data
+
+
+
+networks:
+  chainchat-network:
+    name: chainchat-network
+    driver: bridge
+
+volumes:
+  redis_data:
+  mariadb_data:
+  mongodb_data:
