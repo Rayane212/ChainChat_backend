@@ -34,6 +34,20 @@ export class UserService {
         }
     }
 
+    findUserById(id: number) {
+        try {
+            return this.prisma.user.findUnique({
+                where: {
+                    id: id
+                }
+            });
+        }
+        catch (e) {
+            console.log(e);
+            throw e;
+        }
+    }
+
 
     existsByEmail(email: string): boolean {
         const user = this.findUserByEmail(email);
@@ -60,5 +74,34 @@ export class UserService {
             data: user
         });
     }
+
+  async enableTwoFA(userId: number, secret: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        twoFASecret: secret,
+        isTwoFAEnabled: true,
+      },
+    });
+  }
+
+  async disableTwoFA(userId: number) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        twoFASecret: null,
+        isTwoFAEnabled: false,
+      },
+    });
+  }
+
+  async isTwoFAEnabled(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { isTwoFAEnabled: true },
+    });
+
+    return user?.isTwoFAEnabled || false;
+  }
 
 }

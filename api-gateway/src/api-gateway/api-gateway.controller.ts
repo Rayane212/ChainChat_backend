@@ -1,4 +1,4 @@
-import { HttpException, Inject } from '@nestjs/common';
+import { HttpException, Inject, Headers } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Controller, Post, Body, Get, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -48,11 +48,11 @@ export class ApiGatewayController {
   }
 
   // forget password  
-  @Post('auth/forget-password')
-  async forgetPassword(@Body() data: any) {
+  @Post('auth/send-mail-forget-password')
+  async sendorgetPassword(@Body() data: any) {
     try {
       const response = await firstValueFrom(
-        this.authClient.send('auth.forget-password', data)
+        this.authClient.send('auth.send-mail-forget-password', data)
       );
       return response;
     } catch (error) {
@@ -64,6 +64,76 @@ export class ApiGatewayController {
     }
   }
 
+  @Post('auth/reset-password')
+  async resetPassword(@Body() data: any) {
+    try {
+      const response = await firstValueFrom(
+        this.authClient.send('auth.reset-password', data)
+      );
+      return response;
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw new HttpException(
+        error.message || 'Service temporarily unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+  }
+
+  @UseGuards(AuthGuard) 
+  @Post('auth/generate-2fa-secret')
+  async generateTwoFASecret(@Headers('Authorization') authHeader: string) {
+    try{
+      const response = await firstValueFrom(
+        this.authClient.send('auth.generate-2fa-secret', authHeader)
+      );
+      return response;
+    }catch (error) {
+      console.error('Generate 2FA secret error:', error);
+      throw new HttpException(
+        error.message || 'Service temporarily unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+    
+  }
+
+  @UseGuards(AuthGuard) 
+  @Post('auth/verify-2fa')
+  async verifyTwoFA(@Body() data: { token:string, code: string }, @Headers('Authorization') authHeader: string) {
+    try{
+      authHeader = authHeader.split(' ')[1];
+      data.token = authHeader;
+      const response = await firstValueFrom(
+        this.authClient.send('auth.verify-2fa', data)
+      );
+      return response;
+    }catch (error) {
+      console.error('Generate 2FA secret error:', error);
+      throw new HttpException(
+        error.message || 'Service temporarily unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('auth/disable-2fa')
+  async disableTwoFA(@Headers('Authorization') authHeader: string, @Body('password') password: string) {
+    try{
+      authHeader = authHeader.split(' ')[1];
+      const response = await firstValueFrom(
+        this.authClient.send('auth.disable-2fa', { token: authHeader, password })
+      );
+      return response;
+    }catch (error) {
+      console.error('Generate 2FA secret error:', error);
+      throw new HttpException(
+        error.message || 'Service temporarily unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE
+      );
+    }
+  }
 
   @Post('auth/validate-token')
   async validateToken(@Body('token') token: string) {

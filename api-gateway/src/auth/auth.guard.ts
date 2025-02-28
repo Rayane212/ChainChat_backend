@@ -1,9 +1,11 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, timeout } from "rxjs";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  private readonly logger = new Logger(AuthGuard.name);
+
   constructor(
     @Inject('AUTH_SERVICE') private authClient: ClientProxy,
     @Inject('MESSAGING_SERVICE') private messagingClient: ClientProxy
@@ -36,12 +38,14 @@ export class AuthGuard implements CanActivate {
 
     request.user = user;
 
-
     if (user) {
-      // Synchroniser l'utilisateur avec le service de messagerie
-      const result = await firstValueFrom(
-        this.messagingClient.send('sync_user', { user })
-      );
+      try {
+        await firstValueFrom(
+          this.messagingClient.send('sync_user', { user }).pipe(timeout(3000))
+        );
+      } catch (error) {
+        this.logger.warn("Failed to sync user with messaging service", error);
+      }
       return true;
     }
     return false;
