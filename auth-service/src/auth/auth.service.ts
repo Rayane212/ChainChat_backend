@@ -220,7 +220,7 @@ export class AuthService implements OnModuleInit {
         return { success: true, message: '2FA verification successful' , token };
     }
       
-    async disableTwoFA(tokenJwt: string) {
+    async disableTwoFA(tokenJwt: string, password: string) {
         let decoded;
         try {
             decoded = this.jwtService.verify(tokenJwt);
@@ -231,9 +231,14 @@ export class AuthService implements OnModuleInit {
         const userId = decoded.id;
         const user = await this.userService.findUserById(userId);
         if (!user || !user.isTwoFAEnabled) {
-            throw new UnauthorizedException('2FA is not enabled for this user');
+            throw new RpcException('2FA is not enabled for this user');
         }
-        
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new RpcException('Invalid password');
+        }
+
 
         await this.userService.disableTwoFA(userId);
 

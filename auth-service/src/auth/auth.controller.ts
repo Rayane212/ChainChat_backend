@@ -132,9 +132,9 @@ export class AuthController {
   }
 
   @MessagePattern('auth.disable-2fa')
-  async disableTwoFA(@Payload() data: { token: string }) {
+  async disableTwoFA(@Payload() data: { token: string, password: string }) {
     try {
-      return await this.authService.disableTwoFA(data.token);
+      return await this.authService.disableTwoFA(data.token, data.password);
     } catch (err) {
       this.logger.error(`Error disabling 2FA: ${err.message}`);
       throw new RpcException(err.message || 'Failed to disable 2FA');

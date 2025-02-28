@@ -119,11 +119,11 @@ export class ApiGatewayController {
 
   @UseGuards(AuthGuard)
   @Post('auth/disable-2fa')
-  async disableTwoFA(@Headers('Authorization') authHeader: string) {
+  async disableTwoFA(@Headers('Authorization') authHeader: string, @Body('password') password: string) {
     try{
       authHeader = authHeader.split(' ')[1];
       const response = await firstValueFrom(
-        this.authClient.send('auth.disable-2fa', { token: authHeader })
+        this.authClient.send('auth.disable-2fa', { token: authHeader, password })
       );
       return response;
     }catch (error) {
